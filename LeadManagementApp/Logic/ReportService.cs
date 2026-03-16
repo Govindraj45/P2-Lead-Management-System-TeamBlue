@@ -1,17 +1,31 @@
 using LeadManagementSystem.Data;
+using LeadManagementSystem.Interfaces;
 
 namespace LeadManagementSystem.Logic;
 
 public class ReportService
 {
-    private readonly LeadRepository _repo = new();
+    private readonly ILeadRepository _repo;
+
+    public ReportService(ILeadRepository repo)
+    {
+        _repo = repo;
+    }
+
+    public List<LeadStatusStat> GetLeadStatusDistribution()
+    {
+        var leads = _repo.GetAllLeads();
+
+        return leads.GroupBy(l => l.Status)
+            .Select(g => new LeadStatusStat(g.Key, g.Count()))
+            .OrderByDescending(x => x.Count)
+            .ToList();
+    }
 
     // Generate Lead Analytics 
     public void ShowLeadStatusDistribution()
     {
-        var leads = _repo.GetAllLeads();
-        var stats = leads.GroupBy(l => l.Status)
-                         .Select(g => new { Status = g.Key, Count = g.Count() });
+        var stats = GetLeadStatusDistribution();
 
         Console.WriteLine("\n--- Lead Status Distribution ---");
         foreach (var item in stats)
@@ -20,3 +34,5 @@ public class ReportService
         }
     }
 }
+
+public sealed record LeadStatusStat(string Status, int Count);

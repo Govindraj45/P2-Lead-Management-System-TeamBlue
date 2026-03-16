@@ -13,7 +13,7 @@ public class LeadRepository : ILeadRepository
     public void AddLead(Lead lead)
     {
         using SqlConnection conn = new SqlConnection(_connectionString);
-        [cite_start]// Parameterized query to prevent SQL Injection 
+        // Parameterized query to prevent SQL Injection 
         string sql = "INSERT INTO Leads (Name, Email, Phone, Company, Status, Source, Priority, CreatedDate) " +
                      "VALUES (@Name, @Email, @Phone, @Company, @Status, @Source, @Priority, @CreatedDate)";
 
