@@ -1,12 +1,11 @@
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Models;
-using MediatR;
 
 namespace LeadManagementSystem.Features.Interactions;
 
-public sealed record GetInteractionsByLeadQuery(int LeadId) : IRequest<List<Interaction>>;
+public sealed record GetInteractionsByLeadQuery(int LeadId);
 
-public sealed class GetInteractionsByLeadHandler : IRequestHandler<GetInteractionsByLeadQuery, List<Interaction>>
+public sealed class GetInteractionsByLeadHandler
 {
     private readonly IInteractionRepository _repository;
 
@@ -15,7 +14,7 @@ public sealed class GetInteractionsByLeadHandler : IRequestHandler<GetInteractio
         _repository = repository;
     }
 
-    public Task<List<Interaction>> Handle(GetInteractionsByLeadQuery request, CancellationToken cancellationToken)
+    public Task<List<Interaction>> HandleAsync(GetInteractionsByLeadQuery request)
     {
         return Task.FromResult(_repository.GetInteractionsByLead(request.LeadId));
     }

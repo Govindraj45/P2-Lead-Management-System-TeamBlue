@@ -1,5 +1,4 @@
 using LeadManagementSystem.Features.Interactions;
-using MediatR;
 using Microsoft.AspNetCore.Mvc;
 
 namespace LeadManagementInteractionsService.Controllers;
@@ -8,24 +7,28 @@ namespace LeadManagementInteractionsService.Controllers;
 [Route("api/[controller]")]
 public sealed class InteractionsController : ControllerBase
 {
-    private readonly IMediator _mediator;
+    private readonly GetInteractionsByLeadHandler _getByLeadHandler;
+    private readonly CreateInteractionHandler _createHandler;
 
-    public InteractionsController(IMediator mediator)
+    public InteractionsController(
+        GetInteractionsByLeadHandler getByLeadHandler,
+        CreateInteractionHandler createHandler)
     {
-        _mediator = mediator;
+        _getByLeadHandler = getByLeadHandler;
+        _createHandler = createHandler;
     }
 
     [HttpGet("lead/{leadId:int}")]
     public async Task<ActionResult> GetByLead(int leadId)
     {
-        var items = await _mediator.Send(new GetInteractionsByLeadQuery(leadId));
+        var items = await _getByLeadHandler.HandleAsync(new GetInteractionsByLeadQuery(leadId));
         return Ok(items);
     }
 
     [HttpPost]
     public async Task<ActionResult> Create([FromBody] CreateInteractionRequest request)
     {
-        var result = await _mediator.Send(new CreateInteractionCommand(
+        var result = await _createHandler.HandleAsync(new CreateInteractionCommand(
             request.InteractionType,
             request.Details,
             request.InteractionDate,

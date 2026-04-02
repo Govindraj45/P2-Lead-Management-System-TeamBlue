@@ -10,7 +10,6 @@ using LeadManagementSystem.Features.Reports;
 using LeadManagementSystem.Features.SalesReps;
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Logic;
-using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Distributed;
@@ -33,7 +32,22 @@ builder.Services.AddSingleton<IConsulClient>(_ =>
 });
 builder.Services.AddHostedService<ConsulRegistrationHostedService>();
 
-builder.Services.AddMediatR(typeof(Program).Assembly);
+// CQRS Handlers (simple service-based, no MediatR)
+builder.Services.AddScoped<CreateLeadHandler>();
+builder.Services.AddScoped<GetAllLeadsHandler>();
+builder.Services.AddScoped<GetLeadByIdHandler>();
+builder.Services.AddScoped<UpdateLeadHandler>();
+builder.Services.AddScoped<UpdateLeadStatusHandler>();
+builder.Services.AddScoped<DeleteLeadHandler>();
+builder.Services.AddScoped<ConvertLeadToCustomerHandler>();
+builder.Services.AddScoped<CreateInteractionHandler>();
+builder.Services.AddScoped<GetInteractionsByLeadHandler>();
+builder.Services.AddScoped<GetLeadStatusDistributionHandler>();
+builder.Services.AddScoped<CreateSalesRepHandler>();
+builder.Services.AddScoped<GetAllSalesRepsHandler>();
+builder.Services.AddScoped<GetSalesRepByIdHandler>();
+builder.Services.AddScoped<UpdateSalesRepHandler>();
+builder.Services.AddScoped<DeleteSalesRepHandler>();
 
 builder.Services.AddScoped<ILeadRepository, EfLeadRepository>();
 builder.Services.AddScoped<ISalesRepository, EfSalesRepository>();
@@ -108,7 +122,7 @@ app.MapGet("/", () => Results.Ok(new
     status = "running",
     database = "SQL Server",
     discovery = "Consul",
-    architecture = "Mediator + EF Core"
+    architecture = "CQRS + EF Core"
 }));
 
 app.MapGet("/api/health", () => Results.Ok(new
@@ -137,9 +151,19 @@ app.MapPost("/api/auth/login", async (LoginRequest request, AuthService authServ
 
 var leads = app.MapGroup("/api/leads").RequireAuthorization("AllRoles");
 
-leads.MapGet("", async (int? page, int? pageSize, IMediator mediator) =>
+leads.MapGet("", async (int? page, int? pageSize, string? status, string? source, string? search, GetAllLeadsHandler handler) =>
 {
-    var allLeads = await mediator.Send(new GetAllLeadsQuery());
+    var allLeads = await handler.HandleAsync(new GetAllLeadsQuery());
+
+    if (!string.IsNullOrWhiteSpace(status))
+        allLeads = allLeads.Where(l => l.Status.Equals(status, StringComparison.OrdinalIgnoreCase)).ToList();
+    if (!string.IsNullOrWhiteSpace(source))
+        allLeads = allLeads.Where(l => l.Source.Equals(source, StringComparison.OrdinalIgnoreCase)).ToList();
+    if (!string.IsNullOrWhiteSpace(search))
+        allLeads = allLeads.Where(l =>
+            (l.Name != null && l.Name.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+            (l.Email != null && l.Email.Contains(search, StringComparison.OrdinalIgnoreCase))).ToList();
+
     var p = page ?? 1;
     var ps = pageSize ?? 10;
     var total = allLeads.Count;
@@ -147,15 +171,15 @@ leads.MapGet("", async (int? page, int? pageSize, IMediator mediator) =>
     return Results.Ok(new { items, total, page = p, pageSize = ps, totalPages = (int)Math.Ceiling(total / (double)ps) });
 });
 
-leads.MapGet("/{id:int}", async (int id, IMediator mediator) =>
+leads.MapGet("/{id:int}", async (int id, GetLeadByIdHandler handler) =>
 {
-    var lead = await mediator.Send(new GetLeadByIdQuery(id));
+    var lead = await handler.HandleAsync(new GetLeadByIdQuery(id));
     return lead is null ? Results.NotFound(new { message = "Lead not found." }) : Results.Ok(lead);
 });
 
-leads.MapPost("", async (CreateLeadRequest request, IMediator mediator, IDistributedCache cache) =>
+leads.MapPost("", async (CreateLeadRequest request, CreateLeadHandler handler, IDistributedCache cache) =>
 {
-    var result = await mediator.Send(new CreateLeadCommand(
+    var result = await handler.HandleAsync(new CreateLeadCommand(
         request.Name,
         request.Email,
         request.Phone,
@@ -172,9 +196,9 @@ leads.MapPost("", async (CreateLeadRequest request, IMediator mediator, IDistrib
         : Results.BadRequest(new { message = result.Message });
 });
 
-leads.MapPut("/{id:int}", async (int id, UpdateLeadRequest request, IMediator mediator, IDistributedCache cache) =>
+leads.MapPut("/{id:int}", async (int id, UpdateLeadRequest request, UpdateLeadHandler handler, IDistributedCache cache) =>
 {
-    var result = await mediator.Send(new UpdateLeadCommand(
+    var result = await handler.HandleAsync(new UpdateLeadCommand(
         id,
         request.Name,
         request.Email,
@@ -190,37 +214,37 @@ leads.MapPut("/{id:int}", async (int id, UpdateLeadRequest request, IMediator me
     return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
 });
 
-leads.MapDelete("/{id:int}", async (int id, IMediator mediator, IDistributedCache cache) =>
+leads.MapDelete("/{id:int}", async (int id, DeleteLeadHandler handler, IDistributedCache cache) =>
 {
-    var result = await mediator.Send(new DeleteLeadCommand(id));
+    var result = await handler.HandleAsync(new DeleteLeadCommand(id));
     if (result.Success) await InvalidateAnalyticsCache(cache);
     return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
 }).RequireAuthorization("AdminOnly");
 
-leads.MapPut("/{id:int}/status", async (int id, LeadStatusUpdateRequest request, IMediator mediator, IDistributedCache cache) =>
+leads.MapPut("/{id:int}/status", async (int id, LeadStatusUpdateRequest request, UpdateLeadStatusHandler handler, IDistributedCache cache) =>
 {
-    var result = await mediator.Send(new UpdateLeadStatusCommand(id, request.NewStatus));
+    var result = await handler.HandleAsync(new UpdateLeadStatusCommand(id, request.NewStatus));
     if (result.Success) await InvalidateAnalyticsCache(cache);
     return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
 });
 
-leads.MapPost("/{id:int}/convert", async (int id, IMediator mediator, IDistributedCache cache) =>
+leads.MapPost("/{id:int}/convert", async (int id, ConvertLeadToCustomerHandler handler, IDistributedCache cache) =>
 {
-    var result = await mediator.Send(new ConvertLeadToCustomerCommand(id));
+    var result = await handler.HandleAsync(new ConvertLeadToCustomerCommand(id));
     if (result.Success) await InvalidateAnalyticsCache(cache);
     return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
 }).RequireAuthorization("ManagerOrAdmin");
 
 // Interaction routes nested under leads (per PDF spec)
-leads.MapGet("/{id:int}/interactions", async (int id, IMediator mediator) =>
+leads.MapGet("/{id:int}/interactions", async (int id, GetInteractionsByLeadHandler handler) =>
 {
-    var items = await mediator.Send(new GetInteractionsByLeadQuery(id));
+    var items = await handler.HandleAsync(new GetInteractionsByLeadQuery(id));
     return Results.Ok(items);
 });
 
-leads.MapPost("/{id:int}/interactions", async (int id, CreateInteractionRequest request, IMediator mediator, IDistributedCache cache) =>
+leads.MapPost("/{id:int}/interactions", async (int id, CreateInteractionRequest request, CreateInteractionHandler handler, IDistributedCache cache) =>
 {
-    var result = await mediator.Send(new CreateInteractionCommand(
+    var result = await handler.HandleAsync(new CreateInteractionCommand(
         request.InteractionType,
         request.Notes,
         request.InteractionDate,
@@ -235,50 +259,50 @@ leads.MapPost("/{id:int}/interactions", async (int id, CreateInteractionRequest 
 
 var reps = app.MapGroup("/api/reps").RequireAuthorization("AllRoles");
 
-reps.MapGet("", async (IMediator mediator) =>
+reps.MapGet("", async (GetAllSalesRepsHandler handler) =>
 {
-    var reps = await mediator.Send(new GetAllSalesRepsQuery());
+    var reps = await handler.HandleAsync(new GetAllSalesRepsQuery());
     return Results.Ok(reps);
 });
 
-reps.MapGet("/{id:int}", async (int id, IMediator mediator) =>
+reps.MapGet("/{id:int}", async (int id, GetSalesRepByIdHandler handler) =>
 {
-    var rep = await mediator.Send(new GetSalesRepByIdQuery(id));
+    var rep = await handler.HandleAsync(new GetSalesRepByIdQuery(id));
     return rep is null ? Results.NotFound(new { message = "Sales representative not found." }) : Results.Ok(rep);
 });
 
-reps.MapPost("", async (CreateSalesRepRequest request, IMediator mediator) =>
+reps.MapPost("", async (CreateSalesRepRequest request, CreateSalesRepHandler handler) =>
 {
-    var result = await mediator.Send(new CreateSalesRepCommand(request.Name, request.Email, request.Department));
+    var result = await handler.HandleAsync(new CreateSalesRepCommand(request.Name, request.Email, request.Department));
     return result.Success
         ? Results.Created($"/api/reps/{result.Value}", new { id = result.Value, message = result.Message })
         : Results.BadRequest(new { message = result.Message });
 });
 
-reps.MapPut("/{id:int}", async (int id, UpdateSalesRepRequest request, IMediator mediator) =>
+reps.MapPut("/{id:int}", async (int id, UpdateSalesRepRequest request, UpdateSalesRepHandler handler) =>
 {
-    var result = await mediator.Send(new UpdateSalesRepCommand(id, request.Name, request.Email, request.Department));
+    var result = await handler.HandleAsync(new UpdateSalesRepCommand(id, request.Name, request.Email, request.Department));
     return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
 });
 
-reps.MapDelete("/{id:int}", async (int id, IMediator mediator) =>
+reps.MapDelete("/{id:int}", async (int id, DeleteSalesRepHandler handler) =>
 {
-    var result = await mediator.Send(new DeleteSalesRepCommand(id));
+    var result = await handler.HandleAsync(new DeleteSalesRepCommand(id));
     return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
 });
 
 // Legacy interaction routes (backward-compat)
 var interactions = app.MapGroup("/api/interactions").RequireAuthorization("AllRoles");
 
-interactions.MapGet("/lead/{leadId:int}", async (int leadId, IMediator mediator) =>
+interactions.MapGet("/lead/{leadId:int}", async (int leadId, GetInteractionsByLeadHandler handler) =>
 {
-    var items = await mediator.Send(new GetInteractionsByLeadQuery(leadId));
+    var items = await handler.HandleAsync(new GetInteractionsByLeadQuery(leadId));
     return Results.Ok(items);
 });
 
-interactions.MapPost("", async (CreateInteractionRequest request, IMediator mediator, IDistributedCache cache) =>
+interactions.MapPost("", async (CreateInteractionRequest request, CreateInteractionHandler handler, IDistributedCache cache) =>
 {
-    var result = await mediator.Send(new CreateInteractionCommand(
+    var result = await handler.HandleAsync(new CreateInteractionCommand(
         request.InteractionType,
         request.Notes,
         request.InteractionDate,

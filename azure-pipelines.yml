@@ -1,0 +1,196 @@
+# ============================================================================
+# Azure DevOps CI/CD Pipeline — Lead Management System
+# ============================================================================
+# PREREQUISITES:
+#   1. Run ./azure/provision.sh to create all Azure resources
+#   2. Create service connections in Azure DevOps:
+#      - 'ACRServiceConnection' (Docker Registry → ACR)
+#      - 'AzureServiceConnection' (Azure Resource Manager)
+#   3. Add SECRET pipeline variables:
+#      - sqlConnectionString, redisConnectionString, jwtSecret
+#   4. Update the variable values below with output from provision.sh
+# ============================================================================
+
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # ---- Service Connections ----
+  dockerRegistryServiceConnection: 'ACRServiceConnection'
+  azureSubscription: 'AzureServiceConnection'
+
+  # ---- Container Registry (update after running provision.sh) ----
+  acrName: 'lmscontainerregistry'
+  acrLoginServer: '$(acrName).azurecr.io'
+
+  # ---- Image Names ----
+  backendImageName: 'lms-api'
+  frontendImageName: 'lms-frontend'
+
+  # ---- App Service Names (update after running provision.sh) ----
+  backendAppService: 'lms-api-app'
+  frontendAppService: 'lms-frontend-app'
+
+  # ---- Build Tag ----
+  tag: '$(Build.BuildId)'
+
+stages:
+  # ============================================
+  # Stage 1: Build & Test .NET Backend
+  # ============================================
+  - stage: Test
+    displayName: 'Build & Test'
+    jobs:
+      - job: DotNetTest
+        displayName: 'Run .NET Tests'
+        steps:
+          - task: UseDotNet@2
+            displayName: 'Use .NET 8 SDK'
+            inputs:
+              packageType: 'sdk'
+              version: '8.x'
+
+          - script: dotnet restore
+            displayName: 'Restore NuGet packages'
+            workingDirectory: 'LeadManagementBackend'
+
+          - script: dotnet build --configuration Release --no-restore
+            displayName: 'Build solution'
+            workingDirectory: 'LeadManagementBackend'
+
+          - script: dotnet test --configuration Release --no-build --logger trx --results-directory $(Agent.TempDirectory)/TestResults
+            displayName: 'Run unit tests'
+            workingDirectory: 'LeadManagementBackend'
+
+          - task: PublishTestResults@2
+            displayName: 'Publish test results'
+            condition: always()
+            inputs:
+              testResultsFormat: 'VSTest'
+              testResultsFiles: '$(Agent.TempDirectory)/TestResults/*.trx'
+
+  # ============================================
+  # Stage 2: Build & Push Docker Images to ACR
+  # ============================================
+  - stage: Build
+    displayName: 'Build & Push Images'
+    dependsOn: Test
+    jobs:
+      - job: BuildImages
+        displayName: 'Build Docker Images'
+        steps:
+          - task: Docker@2
+            displayName: 'Build & Push Backend Image'
+            inputs:
+              command: buildAndPush
+              repository: '$(backendImageName)'
+              dockerfile: 'LeadManagementBackend/Dockerfile'
+              buildContext: 'LeadManagementBackend'
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              tags: |
+                $(tag)
+                latest
+
+          - task: Docker@2
+            displayName: 'Build & Push Frontend Image'
+            inputs:
+              command: buildAndPush
+              repository: '$(frontendImageName)'
+              dockerfile: 'LeadManagementFrontend/Dockerfile'
+              buildContext: 'LeadManagementFrontend'
+              containerRegistry: '$(dockerRegistryServiceConnection)'
+              tags: |
+                $(tag)
+                latest
+
+  # ============================================
+  # Stage 3: Deploy to Azure App Services
+  # ============================================
+  - stage: Deploy
+    displayName: 'Deploy to Azure'
+    dependsOn: Build
+    jobs:
+      - deployment: DeployBackend
+        displayName: 'Deploy Backend API'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebAppContainer@1
+                  displayName: 'Deploy API to App Service'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    appName: '$(backendAppService)'
+                    containers: '$(acrLoginServer)/$(backendImageName):$(tag)'
+                    appSettings: |
+                      -ASPNETCORE_ENVIRONMENT Production
+                      -ASPNETCORE_URLS http://+:5000
+                      -WEBSITES_PORT 5000
+                      -ConnectionStrings__DefaultConnection "$(sqlConnectionString)"
+                      -Redis__ConnectionString "$(redisConnectionString)"
+                      -Jwt__Secret "$(jwtSecret)"
+                      -Jwt__Issuer LeadManagementSystem
+                      -Jwt__Audience LeadManagementSystem
+                      -Jwt__ExpirationMinutes 60
+
+      - deployment: DeployFrontend
+        displayName: 'Deploy Frontend'
+        environment: 'production'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureWebAppContainer@1
+                  displayName: 'Deploy Frontend to App Service'
+                  inputs:
+                    azureSubscription: '$(azureSubscription)'
+                    appName: '$(frontendAppService)'
+                    containers: '$(acrLoginServer)/$(frontendImageName):$(tag)'
+                    appSettings: |
+                      -API_BACKEND_URL https://$(backendAppService).azurewebsites.net
+                      -WEBSITES_PORT 80
+
+  # ============================================
+  # Stage 4: Deploy to AKS (Kubernetes)
+  # ============================================
+  # Uncomment this stage if deploying to AKS instead of App Service.
+  # Prerequisites:
+  #   - AKS cluster created and connected as a DevOps environment
+  #   - kubectl service connection named 'AKSServiceConnection'
+  #
+  # - stage: DeployK8s
+  #   displayName: 'Deploy to AKS'
+  #   dependsOn: Build
+  #   jobs:
+  #     - deployment: DeployToAKS
+  #       displayName: 'Deploy to Kubernetes'
+  #       environment: 'aks-production'
+  #       strategy:
+  #         runOnce:
+  #           deploy:
+  #             steps:
+  #               - task: KubernetesManifest@1
+  #                 displayName: 'Set image tags'
+  #                 inputs:
+  #                   action: deploy
+  #                   connectionType: kubernetesServiceConnection
+  #                   kubernetesServiceConnection: 'AKSServiceConnection'
+  #                   namespace: 'lms'
+  #                   manifests: |
+  #                     k8s/base/namespace.yaml
+  #                     k8s/base/secrets.yaml
+  #                     k8s/base/configmap.yaml
+  #                     k8s/base/sqlserver.yaml
+  #                     k8s/base/redis.yaml
+  #                     k8s/base/api.yaml
+  #                     k8s/base/frontend.yaml
+  #                     k8s/base/ingress.yaml
+  #                   containers: |
+  #                     $(acrLoginServer)/$(backendImageName):$(tag)
+  #                     $(acrLoginServer)/$(frontendImageName):$(tag)

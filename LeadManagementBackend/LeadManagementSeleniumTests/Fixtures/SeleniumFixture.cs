@@ -8,7 +8,7 @@ public class SeleniumFixture : IDisposable
 {
     public IWebDriver Driver { get; }
     public const string BaseUrl = "http://localhost:80";
-    public const string ApiUrl = "http://localhost:5001";
+    public const string ApiUrl = "http://localhost:5000";
 
     public SeleniumFixture()
     {

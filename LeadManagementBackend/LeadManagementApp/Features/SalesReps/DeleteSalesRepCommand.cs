@@ -1,12 +1,11 @@
 using LeadManagementSystem.Features.Common;
 using LeadManagementSystem.Interfaces;
-using MediatR;
 
 namespace LeadManagementSystem.Features.SalesReps;
 
-public sealed record DeleteSalesRepCommand(int RepId) : IRequest<OperationResult>;
+public sealed record DeleteSalesRepCommand(int RepId);
 
-public sealed class DeleteSalesRepHandler : IRequestHandler<DeleteSalesRepCommand, OperationResult>
+public sealed class DeleteSalesRepHandler
 {
     private readonly ISalesRepository _repository;
 
@@ -15,7 +14,7 @@ public sealed class DeleteSalesRepHandler : IRequestHandler<DeleteSalesRepComman
         _repository = repository;
     }
 
-    public Task<OperationResult> Handle(DeleteSalesRepCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult> HandleAsync(DeleteSalesRepCommand request)
     {
         var existing = _repository.GetRepById(request.RepId);
         if (existing is null)

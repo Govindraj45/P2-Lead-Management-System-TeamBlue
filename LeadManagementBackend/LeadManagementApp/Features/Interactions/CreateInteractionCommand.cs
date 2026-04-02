@@ -1,7 +1,6 @@
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Models;
 using LeadManagementSystem.Features.Common;
-using MediatR;
 
 namespace LeadManagementSystem.Features.Interactions;
 
@@ -10,9 +9,9 @@ public sealed record CreateInteractionCommand(
     string Notes,
     DateTime? InteractionDate,
     DateTime? FollowUpDate,
-    int LeadId) : IRequest<OperationResult<int>>;
+    int LeadId);
 
-public sealed class CreateInteractionHandler : IRequestHandler<CreateInteractionCommand, OperationResult<int>>
+public sealed class CreateInteractionHandler
 {
     private readonly IInteractionRepository _repository;
     private readonly ILeadRepository _leadRepository;
@@ -25,7 +24,7 @@ public sealed class CreateInteractionHandler : IRequestHandler<CreateInteraction
         _logger = logger;
     }
 
-    public Task<OperationResult<int>> Handle(CreateInteractionCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult<int>> HandleAsync(CreateInteractionCommand request)
     {
         var lead = _leadRepository.GetLeadById(request.LeadId);
         if (lead is null)

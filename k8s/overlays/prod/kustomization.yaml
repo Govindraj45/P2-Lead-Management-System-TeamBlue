@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: lms
+
+resources:
+  - ../../base
+
+# Override images to use ACR registry
+images:
+  - name: lms-api
+    newName: lmscontainerregistry.azurecr.io/lms-api
+    newTag: latest
+  - name: lms-frontend
+    newName: lmscontainerregistry.azurecr.io/lms-frontend
+    newTag: latest
+
+patches:
+  # Production: 3 API replicas
+  - target:
+      kind: Deployment
+      name: lms-api
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 3
+  # Production: 2 frontend replicas
+  - target:
+      kind: Deployment
+      name: lms-frontend
+    patch: |
+      - op: replace
+        path: /spec/replicas
+        value: 2
+  # Production ConfigMap override
+  - target:
+      kind: ConfigMap
+      name: lms-config
+    patch: |
+      - op: replace
+        path: /data/ASPNETCORE_ENVIRONMENT
+        value: Production

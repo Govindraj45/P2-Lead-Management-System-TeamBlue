@@ -1,16 +1,15 @@
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Models;
 using LeadManagementSystem.Features.Common;
-using MediatR;
 
 namespace LeadManagementSystem.Features.SalesReps;
 
 public sealed record CreateSalesRepCommand(
     string Name,
     string Email,
-    string? Department) : IRequest<OperationResult<int>>;
+    string? Department);
 
-public sealed class CreateSalesRepHandler : IRequestHandler<CreateSalesRepCommand, OperationResult<int>>
+public sealed class CreateSalesRepHandler
 {
     private readonly ISalesRepository _repository;
 
@@ -19,7 +18,7 @@ public sealed class CreateSalesRepHandler : IRequestHandler<CreateSalesRepComman
         _repository = repository;
     }
 
-    public Task<OperationResult<int>> Handle(CreateSalesRepCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult<int>> HandleAsync(CreateSalesRepCommand request)
     {
         var rep = new SalesRep
         {

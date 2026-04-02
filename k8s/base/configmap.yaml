@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lms-config
+  namespace: lms
+data:
+  ASPNETCORE_ENVIRONMENT: "Production"
+  ASPNETCORE_URLS: "http://+:5000"
+  Jwt__Issuer: "LeadManagementSystem"
+  Jwt__Audience: "LeadManagementSystem"
+  Jwt__ExpirationMinutes: "60"

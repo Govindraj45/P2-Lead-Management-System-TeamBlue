@@ -22,7 +22,7 @@ public class CreateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateLeadCommand("John Doe", "john@test.com", "1234567890", "Acme", "Dev", "New", "Website", "High", null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.True(result.Success);
         _leadRepo.Verify(r => r.AddLead(It.IsAny<Lead>()), Times.Once);
@@ -34,7 +34,7 @@ public class CreateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateLeadCommand("", "john@test.com", null, null, null, null, null, null, null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("Name is required", result.Message);
@@ -46,7 +46,7 @@ public class CreateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateLeadCommand("John", "not-an-email", null, null, null, null, null, null, null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("Email must be a valid format", result.Message);
@@ -62,7 +62,7 @@ public class CreateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateLeadCommand("John", "john@test.com", null, null, null, null, null, null, null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("email already exists", result.Message);
@@ -75,7 +75,7 @@ public class CreateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateLeadCommand("John", null, "abc", null, null, null, null, null, null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("Phone must follow a valid format", result.Message);
@@ -89,7 +89,7 @@ public class CreateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateLeadCommand("John", null, null, null, null, null, null, null, 999);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("does not reference an existing sales rep", result.Message);
@@ -102,7 +102,7 @@ public class CreateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateLeadCommand("Jane", null, null, null, null, null, null, null, null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.True(result.Success);
         Assert.Contains("created successfully", result.Message);

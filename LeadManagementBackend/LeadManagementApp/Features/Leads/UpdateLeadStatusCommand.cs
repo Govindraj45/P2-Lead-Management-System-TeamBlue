@@ -1,12 +1,11 @@
 using LeadManagementSystem.Features.Common;
 using LeadManagementSystem.Logic;
-using MediatR;
 
 namespace LeadManagementSystem.Features.Leads;
 
-public sealed record UpdateLeadStatusCommand(int LeadId, string NewStatus) : IRequest<OperationResult>;
+public sealed record UpdateLeadStatusCommand(int LeadId, string NewStatus);
 
-public sealed class UpdateLeadStatusHandler : IRequestHandler<UpdateLeadStatusCommand, OperationResult>
+public sealed class UpdateLeadStatusHandler
 {
     private readonly LeadService _leadService;
     private readonly ILogger<UpdateLeadStatusHandler> _logger;
@@ -17,7 +16,7 @@ public sealed class UpdateLeadStatusHandler : IRequestHandler<UpdateLeadStatusCo
         _logger = logger;
     }
 
-    public Task<OperationResult> Handle(UpdateLeadStatusCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult> HandleAsync(UpdateLeadStatusCommand request)
     {
         var result = _leadService.UpdateStatus(request.LeadId, request.NewStatus);
         if (result.Success)

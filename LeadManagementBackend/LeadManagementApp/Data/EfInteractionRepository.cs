@@ -22,6 +22,7 @@ public class EfInteractionRepository : IInteractionRepository
     public List<Interaction> GetInteractionsByLead(int leadId)
     {
         return _context.Interactions
+            .AsNoTracking()
             .Where(i => i.LeadId == leadId)
             .OrderByDescending(i => i.InteractionDate)
             .ToList();

@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lms-api
+  namespace: lms
+  labels:
+    app: lms-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: lms-api
+  template:
+    metadata:
+      labels:
+        app: lms-api
+    spec:
+      containers:
+        - name: lms-api
+          image: lms-api:latest
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: lms-config
+          env:
+            - name: ConnectionStrings__DefaultConnection
+              value: "Server=sqlserver;Database=CRM_LeadManagement;User Id=sa;Password=$(SA_PASSWORD);TrustServerCertificate=True"
+            - name: SA_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lms-secrets
+                  key: sa-password
+            - name: Redis__ConnectionString
+              value: "redis:6379"
+            - name: Jwt__Secret
+              valueFrom:
+                secretKeyRef:
+                  name: lms-secrets
+                  key: jwt-secret
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 30
+            timeoutSeconds: 5
+      initContainers:
+        - name: wait-for-sqlserver
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z sqlserver 1433; do echo "Waiting for SQL Server..."; sleep 3; done']
+        - name: wait-for-redis
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z redis 6379; do echo "Waiting for Redis..."; sleep 2; done']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lms-api
+  namespace: lms
+spec:
+  selector:
+    app: lms-api
+  ports:
+    - port: 5000
+      targetPort: 5000
+  type: ClusterIP
