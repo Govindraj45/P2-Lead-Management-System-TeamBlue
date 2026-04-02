@@ -1,74 +1,126 @@
+# This file defines all the services (containers) needed to run the Lead Management System locally.
+# Running "docker-compose up" will start everything: database, cache, backend API, and frontend.
+
 services:
+  # --- SQL Server Database ---
+  # This is where all lead data, user accounts, and interactions are stored.
   sqlserver:
+    # Use the official Microsoft SQL Server 2022 image from Docker Hub
     image: mcr.microsoft.com/mssql/server:2022-latest
+    # Force Linux version (needed for Apple Silicon Macs)
     platform: linux/amd64
+    # Give this container a friendly name so it's easy to find
     container_name: lms-sqlserver
     environment:
+      # Accept the license agreement (required to run SQL Server)
       - ACCEPT_EULA=Y
+      # Set the admin password for the database
       - MSSQL_SA_PASSWORD=P@ssw0rd123!
     ports:
+      # Map port 1433 on your machine to port 1433 in the container
+      # This lets you connect to the database from your computer
       - "1433:1433"
     volumes:
+      # Save database files to a named volume so data survives container restarts
       - sqlserver-data:/var/opt/mssql
+    # Check if SQL Server is ready to accept connections before other services start
     healthcheck:
       test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "P@ssw0rd123!" -Q "SELECT 1" -C -b
       interval: 10s
       timeout: 5s
       retries: 10
+      # Give SQL Server 30 seconds to start up before checking health
       start_period: 30s
 
+  # --- Redis Cache ---
+  # Redis is an in-memory cache used to speed up analytics and reports.
   redis:
+    # Use the lightweight Alpine-based Redis 7 image
     image: redis:7-alpine
     container_name: lms-redis
     ports:
+      # Map port 6379 so you can inspect the cache from your machine
       - "6379:6379"
     volumes:
+      # Persist cached data across container restarts
       - redis-data:/data
+    # Check if Redis is running by sending a "ping" command
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
 
+  # --- Backend API (.NET 8) ---
+  # This is the main API server that handles all business logic.
   lead-api:
     build:
+      # Build the Docker image from the Backend folder
       context: ./LeadManagementBackend
       dockerfile: Dockerfile
     container_name: lms-api
     ports:
+      # Map port 5000 so you can call the API from your browser or Postman
       - "5000:5000"
     environment:
+      # Tell .NET to run in Development mode (more detailed error messages)
       - ASPNETCORE_ENVIRONMENT=Development
+      # Listen on all network interfaces at port 5000
       - ASPNETCORE_URLS=http://+:5000
+      # Connection string to reach SQL Server (uses the container name "sqlserver" as hostname)
       - ConnectionStrings__DefaultConnection=Server=sqlserver;Database=CRM_LeadManagement;User Id=sa;Password=P@ssw0rd123!;TrustServerCertificate=True
+      # Connection string to reach Redis cache
       - Redis__ConnectionString=redis:6379
+      # Secret key used to sign JWT authentication tokens
       - Jwt__Secret=YourSuperSecretKeyThatIsAtLeast32CharactersLong!
       - Jwt__Issuer=LeadManagementSystem
       - Jwt__Audience=LeadManagementSystem
+      # Tokens expire after 60 minutes
       - Jwt__ExpirationMinutes=60
+      # Consul service discovery settings (for microservice communication)
       - Consul__Address=http://consul:8500
       - Consul__ServiceAddress=lead-api
       - Consul__ServicePort=5000
+    # Don't start the API until the database and cache are healthy
     depends_on:
       sqlserver:
         condition: service_healthy
       redis:
         condition: service_healthy
+    # Automatically restart if the API crashes
     restart: on-failure
 
+  # --- Frontend (React + Nginx) ---
+  # This serves the React web application to users in their browser.
   lead-react:
     build:
+      # Build the Docker image from the Frontend folder
       context: ./LeadManagementFrontend
       dockerfile: Dockerfile
     container_name: lms-frontend
     ports:
+      # Map port 3000 on your machine to port 80 inside the container
+      # Visit http://localhost:3000 to see the app
       - "3000:80"
     environment:
+      # Tell the frontend where to find the backend API
       - API_BACKEND_URL=http://lead-api:5000
+    # Don't start the frontend until the API is running
     depends_on:
       - lead-api
     restart: on-failure
 
+# Named volumes keep data safe even when containers are deleted and recreated
 volumes:
   sqlserver-data:
   redis-data:
+
+# ==========================================================================
+# SUMMARY:
+# This docker-compose.yml file defines the entire Lead Management System stack.
+# It spins up four services: SQL Server (database), Redis (cache), the .NET 8
+# backend API, and the React frontend served by Nginx. Running
+# "docker-compose up" starts everything in the right order with health checks
+# and automatic restarts. This is the easiest way to run the full application
+# locally for development.
+# ==========================================================================

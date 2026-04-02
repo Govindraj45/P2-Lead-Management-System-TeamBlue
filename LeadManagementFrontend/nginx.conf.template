@@ -1,21 +1,41 @@
+# This is a TEMPLATE version of the Nginx config.
+# The ${API_BACKEND_URL} placeholder is replaced with a real URL at container startup.
+# This allows the same Docker image to work in any environment.
+
 server {
+    # Listen for web traffic on port 80 (standard HTTP port)
     listen 80;
+    # Accept requests addressed to "localhost"
     server_name localhost;
 
+    # Where the React app's built files live inside the container
     root /usr/share/nginx/html;
+    # Serve index.html as the default page
     index index.html;
 
-    # Proxy API requests to the backend (URL injected at container start)
+    # Forward any request starting with /api/ to the backend server
+    # ${API_BACKEND_URL} is replaced at startup (e.g., http://lead-api:5000)
     location /api/ {
         proxy_pass ${API_BACKEND_URL};
+        # Pass along the original request headers so the backend knows who's calling
         proxy_set_header Host $proxy_host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
     }
 
-    # Serve React app and handle client-side routing
+    # For all other requests, serve the React app
+    # If a file doesn't exist, fall back to index.html (needed for React Router)
     location / {
         try_files $uri $uri/ /index.html;
     }
 }
+
+# ==========================================================================
+# SUMMARY:
+# This is a template version of the Nginx config file. It contains the
+# placeholder ${API_BACKEND_URL} which gets replaced with the actual backend
+# URL when the container starts (via the docker-entrypoint.sh script). This
+# design lets you deploy the same Docker image to different environments
+# (local, staging, production) by just changing an environment variable.
+# ==========================================================================

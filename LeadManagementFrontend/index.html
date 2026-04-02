@@ -1,13 +1,30 @@
 <!doctype html>
+<!-- This is the main HTML file for the Lead Management System frontend. -->
+<!-- React will render the entire application inside the <div id="root"> element below. -->
 <html lang="en">
   <head>
+    <!-- Set the character encoding to support all languages and symbols -->
     <meta charset="UTF-8" />
+    <!-- Set the browser tab icon (favicon) -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <!-- Make the page responsive on mobile devices -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- The title shown in the browser tab -->
     <title>leadmanagementfrontend</title>
   </head>
   <body>
+    <!-- React mounts the entire app here — this empty div becomes the full UI -->
     <div id="root"></div>
+    <!-- Load the main React entry point (Vite handles bundling in production) -->
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+
+<!-- =======================================================================
+  SUMMARY:
+  This is the single HTML page that loads the entire React frontend application.
+  It's a standard HTML5 document with a <div id="root"> where React renders all
+  the UI components. The script tag loads the main React entry point (main.jsx).
+  Vite (the build tool) processes this file during the build to bundle everything
+  into optimized production files.
+======================================================================== -->
