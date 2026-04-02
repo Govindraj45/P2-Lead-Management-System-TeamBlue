@@ -1,36 +1,49 @@
+/* Import Tailwind CSS — this gives us hundreds of utility classes like "text-sm", "bg-white", "p-4", etc. */
 @import "tailwindcss";
 
-/* Custom scrollbar */
+/* Custom scrollbar — makes the browser scrollbar thinner and styled to match our indigo/purple theme */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
+/* The draggable part of the scrollbar is light indigo */
 ::-webkit-scrollbar-thumb { background: #c7d2fe; border-radius: 999px; }
+/* When you hover over the scrollbar thumb, it becomes a darker indigo */
 ::-webkit-scrollbar-thumb:hover { background: #818cf8; }
 
-/* Smooth global transitions */
+/* Smooth global transitions — makes ALL elements on the page smoothly animate when their colors, shadows, or size change (150ms = 0.15 seconds) */
 *, *::before, *::after { transition-property: background-color, border-color, color, fill, stroke, opacity, box-shadow, transform, filter; transition-duration: 150ms; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
 
-/* Glass card utility */
+/* Glass card utility — creates a frosted-glass look (translucent white background with blur behind it) */
 .glass { background: rgba(255,255,255,0.08); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.15); }
 
-/* Gradient text */
+/* Gradient text — makes text display with a purple-to-indigo color gradient instead of a solid color */
 .text-gradient { background: linear-gradient(135deg, #6366f1, #8b5cf6, #a78bfa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
-/* Card hover lift */
+/* Card hover lift — when a user hovers over a card, it rises up slightly and gets a soft indigo shadow */
 .card-hover { transition: transform 0.2s, box-shadow 0.2s; }
 .card-hover:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -8px rgba(99,102,241,0.15); }
 
-/* Fade-in animation */
+/* Fade-in animation — makes elements gradually appear from below (starts invisible 12px lower, ends visible in place) */
 @keyframes fadeInUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 .animate-fade-in { animation: fadeInUp 0.4s ease-out; }
 
-/* Pulse glow for status dot */
+/* Pulse glow for status dot — makes a small dot gently fade in and out continuously (like a heartbeat) */
 @keyframes pulse-glow { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
 
-/* Shimmer loading */
+/* Shimmer loading — creates a shiny wave effect moving left to right, used as a loading placeholder */
 @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 .shimmer { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
 
-/* Gradient border */
+/* Gradient border — adds a colorful indigo-to-pink border around an element using a CSS mask trick */
 .gradient-border { position: relative; }
 .gradient-border::before { content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899); -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0); -webkit-mask-composite: xor; mask-composite: exclude; pointer-events: none; }
+
+/*
+ * FILE SUMMARY:
+ * This is the global CSS stylesheet for the entire frontend application.
+ * It imports Tailwind CSS for utility classes, then defines custom styles that Tailwind
+ * doesn't provide out of the box — like a frosted-glass effect, gradient text, smooth card
+ * hover animations, fade-in entry animations, a shimmering loading placeholder, and a
+ * custom scrollbar styled in the app's indigo/purple color theme.
+ * These styles are available on every page of the application.
+ */
