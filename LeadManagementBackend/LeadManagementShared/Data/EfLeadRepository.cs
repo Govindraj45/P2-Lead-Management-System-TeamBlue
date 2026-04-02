@@ -22,7 +22,7 @@ public class EfLeadRepository : ILeadRepository
     public Lead? GetLeadById(int id)
     {
         return _context.Leads
-            .Include(l => l.AssignedRep)
+            .Include(l => l.AssignedSalesRep)
             .Include(l => l.Interactions)
             .FirstOrDefault(l => l.LeadId == id);
     }
@@ -30,7 +30,7 @@ public class EfLeadRepository : ILeadRepository
     public List<Lead> GetAllLeads()
     {
         return _context.Leads
-            .Include(l => l.AssignedRep)
+            .Include(l => l.AssignedSalesRep)
             .OrderByDescending(l => l.CreatedDate)
             .ToList();
     }

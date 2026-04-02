@@ -7,7 +7,6 @@ public class LeadDbContext : DbContext
 {
     public DbSet<Lead> Leads { get; set; }
     public DbSet<Interaction> Interactions { get; set; }
-    public DbSet<SalesRep> SalesRepresentatives { get; set; }
     public DbSet<User> Users { get; set; }
 
     public LeadDbContext(DbContextOptions<LeadDbContext> options) : base(options) { }
@@ -17,23 +16,22 @@ public class LeadDbContext : DbContext
         // Primary keys
         modelBuilder.Entity<Lead>().HasKey(l => l.LeadId);
         modelBuilder.Entity<Interaction>().HasKey(i => i.InteractionId);
-        modelBuilder.Entity<SalesRep>().HasKey(r => r.RepId);
         modelBuilder.Entity<User>().HasKey(u => u.UserId);
 
-        // Indexes on Lead: Email, Status, AssignedToRepId, Source
+        // Indexes on Lead: Email, Status, AssignedSalesRepId, Source
         modelBuilder.Entity<Lead>().HasIndex(l => l.Email);
         modelBuilder.Entity<Lead>().HasIndex(l => l.Status);
-        modelBuilder.Entity<Lead>().HasIndex(l => l.AssignedToRepId);
+        modelBuilder.Entity<Lead>().HasIndex(l => l.AssignedSalesRepId);
         modelBuilder.Entity<Lead>().HasIndex(l => l.Source);
 
         // Index on User.Email (unique)
         modelBuilder.Entity<User>().HasIndex(u => u.Email).IsUnique();
 
-        // Foreign key: Lead → SalesRep (SetNull on delete)
+        // Foreign key: Lead → User (SalesRep role, SetNull on delete)
         modelBuilder.Entity<Lead>()
-            .HasOne(l => l.AssignedRep)
-            .WithMany(r => r.AssignedLeads)
-            .HasForeignKey(l => l.AssignedToRepId)
+            .HasOne(l => l.AssignedSalesRep)
+            .WithMany(u => u.AssignedLeads)
+            .HasForeignKey(l => l.AssignedSalesRepId)
             .OnDelete(DeleteBehavior.SetNull);
 
         // Foreign key: Interaction → Lead (Cascade on delete)
@@ -49,9 +47,6 @@ public class LeadDbContext : DbContext
         modelBuilder.Entity<Lead>().Property(l => l.Source).HasMaxLength(100);
         modelBuilder.Entity<Lead>().Property(l => l.Priority).HasMaxLength(50);
         modelBuilder.Entity<Lead>().Property(l => l.Name).HasMaxLength(200);
-
-        modelBuilder.Entity<SalesRep>().Property(r => r.Email).HasMaxLength(256);
-        modelBuilder.Entity<SalesRep>().Property(r => r.Name).HasMaxLength(200);
 
         modelBuilder.Entity<User>().Property(u => u.Email).HasMaxLength(256);
         modelBuilder.Entity<User>().Property(u => u.Role).HasMaxLength(50);

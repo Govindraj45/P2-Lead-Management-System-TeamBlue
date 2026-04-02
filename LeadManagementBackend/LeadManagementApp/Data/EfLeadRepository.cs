@@ -23,7 +23,7 @@ public class EfLeadRepository : ILeadRepository
     {
         return _context.Leads
             .AsNoTracking()
-            .Include(l => l.AssignedRep)
+            .Include(l => l.AssignedSalesRep)
             .Include(l => l.Interactions)
             .FirstOrDefault(l => l.LeadId == id);
     }
@@ -32,7 +32,7 @@ public class EfLeadRepository : ILeadRepository
     {
         return _context.Leads
             .AsNoTracking()
-            .Include(l => l.AssignedRep)
+            .Include(l => l.AssignedSalesRep)
             .OrderByDescending(l => l.CreatedDate)
             .ToList();
     }

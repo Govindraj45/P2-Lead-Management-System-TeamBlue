@@ -1,5 +1,6 @@
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Models;
+using LeadManagementSystem.Data;
 using LeadManagementSystem.Features.Common;
 using System.Text.RegularExpressions;
 
@@ -14,18 +15,18 @@ public sealed record CreateLeadCommand(
     string? Status,
     string? Source,
     string? Priority,
-    int? AssignedToRepId);
+    int? AssignedSalesRepId);
 
 public sealed class CreateLeadHandler
 {
     private readonly ILeadRepository _repository;
-    private readonly ISalesRepository _salesRepository;
+    private readonly LeadDbContext _db;
     private readonly ILogger<CreateLeadHandler> _logger;
 
-    public CreateLeadHandler(ILeadRepository repository, ISalesRepository salesRepository, ILogger<CreateLeadHandler> logger)
+    public CreateLeadHandler(ILeadRepository repository, LeadDbContext db, ILogger<CreateLeadHandler> logger)
     {
         _repository = repository;
-        _salesRepository = salesRepository;
+        _db = db;
         _logger = logger;
     }
 
@@ -51,12 +52,12 @@ public sealed class CreateLeadHandler
         if (!string.IsNullOrWhiteSpace(request.Phone) && !Regex.IsMatch(request.Phone, @"^[\d\s\-\+\(\)]{7,20}$"))
             return Task.FromResult(OperationResult<int>.Fail("Phone must follow a valid format."));
 
-        // Validation: AssignedSalesRepId must exist
-        if (request.AssignedToRepId.HasValue)
+        // Validation: AssignedSalesRepId must exist (must be a User with SalesRep role)
+        if (request.AssignedSalesRepId.HasValue)
         {
-            var rep = _salesRepository.GetRepById(request.AssignedToRepId.Value);
-            if (rep is null)
-                return Task.FromResult(OperationResult<int>.Fail("AssignedSalesRepId does not reference an existing sales rep."));
+            var user = _db.Users.FirstOrDefault(u => u.UserId == request.AssignedSalesRepId.Value && u.Role == "SalesRep");
+            if (user is null)
+                return Task.FromResult(OperationResult<int>.Fail("AssignedSalesRepId does not reference an existing sales rep user."));
         }
 
         var lead = new Lead
@@ -69,7 +70,7 @@ public sealed class CreateLeadHandler
             Status = string.IsNullOrWhiteSpace(request.Status) ? "New" : request.Status,
             Source = string.IsNullOrWhiteSpace(request.Source) ? "Website" : request.Source,
             Priority = string.IsNullOrWhiteSpace(request.Priority) ? "Medium" : request.Priority,
-            AssignedToRepId = request.AssignedToRepId,
+            AssignedSalesRepId = request.AssignedSalesRepId,
             CreatedDate = DateTime.UtcNow
         };
 

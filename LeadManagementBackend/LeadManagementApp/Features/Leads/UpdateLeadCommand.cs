@@ -1,5 +1,6 @@
 using LeadManagementSystem.Features.Common;
 using LeadManagementSystem.Interfaces;
+using LeadManagementSystem.Data;
 using LeadManagementSystem.Models;
 using System.Text.RegularExpressions;
 
@@ -15,12 +16,12 @@ public sealed record UpdateLeadCommand(
     string Status,
     string Source,
     string Priority,
-    int? AssignedToRepId);
+    int? AssignedSalesRepId);
 
 public sealed class UpdateLeadHandler
 {
     private readonly ILeadRepository _repository;
-    private readonly ISalesRepository _salesRepository;
+    private readonly LeadDbContext _db;
     private readonly ILogger<UpdateLeadHandler> _logger;
 
     private static readonly Dictionary<string, HashSet<string>> AllowedTransitions = new()
@@ -32,10 +33,10 @@ public sealed class UpdateLeadHandler
         ["Converted"] = new(),
     };
 
-    public UpdateLeadHandler(ILeadRepository repository, ISalesRepository salesRepository, ILogger<UpdateLeadHandler> logger)
+    public UpdateLeadHandler(ILeadRepository repository, LeadDbContext db, ILogger<UpdateLeadHandler> logger)
     {
         _repository = repository;
-        _salesRepository = salesRepository;
+        _db = db;
         _logger = logger;
     }
 
@@ -75,12 +76,12 @@ public sealed class UpdateLeadHandler
                 return Task.FromResult(OperationResult.Fail($"Cannot transition from {existing.Status} to {request.Status}."));
         }
 
-        // Validation: AssignedSalesRepId must exist
-        if (request.AssignedToRepId.HasValue)
+        // Validation: AssignedSalesRepId must exist (must be a User with SalesRep role)
+        if (request.AssignedSalesRepId.HasValue)
         {
-            var rep = _salesRepository.GetRepById(request.AssignedToRepId.Value);
-            if (rep is null)
-                return Task.FromResult(OperationResult.Fail("AssignedSalesRepId does not reference an existing sales rep."));
+            var user = _db.Users.FirstOrDefault(u => u.UserId == request.AssignedSalesRepId.Value && u.Role == "SalesRep");
+            if (user is null)
+                return Task.FromResult(OperationResult.Fail("AssignedSalesRepId does not reference an existing sales rep user."));
         }
 
         var updatedLead = new Lead
@@ -94,7 +95,7 @@ public sealed class UpdateLeadHandler
             Status = request.Status,
             Source = request.Source,
             Priority = request.Priority,
-            AssignedToRepId = request.AssignedToRepId,
+            AssignedSalesRepId = request.AssignedSalesRepId,
             CreatedDate = existing.CreatedDate,
             ModifiedDate = DateTime.UtcNow,
             Interactions = existing.Interactions
