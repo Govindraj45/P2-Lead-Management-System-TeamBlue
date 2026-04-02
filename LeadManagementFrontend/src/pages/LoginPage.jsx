@@ -1,21 +1,12 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import ErrorAlert from '../components/ui/ErrorAlert';
 import Spinner from '../components/ui/Spinner';
-
-/* Mini sparkline SVG for the dashboard preview cards */
-const Sparkline = ({ d, color }) => (
-  <svg viewBox="0 0 80 32" className="w-16 h-8" fill="none">
-    <path d={d} stroke={color} strokeWidth="2" strokeLinecap="round" fill="none" />
-  </svg>
-);
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
 
@@ -30,124 +21,107 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* =========  LEFT PANEL – Blue promotional  ========= */}
-      <div
-        className="relative hidden lg:flex lg:w-[50%] flex-col justify-center px-12 xl:px-20 py-16 overflow-hidden"
-        style={{ background: '#2563EB' }}
-      >
-        {/* Decorative circles */}
-        <div className="absolute -top-32 -left-32 w-[500px] h-[500px] rounded-full border border-white/10" />
-        <div className="absolute -bottom-40 -right-40 w-[600px] h-[600px] rounded-full border border-white/10" />
-        <div className="absolute top-1/2 left-1/4 w-[350px] h-[350px] rounded-full bg-white/5" />
+    <div className="min-h-screen flex" style={{ background: 'linear-gradient(135deg, #f8fafc 0%, #eef2ff 50%, #f5f3ff 100%)' }}>
 
-        {/* Logo */}
-        <div className="relative z-10 mb-12">
-          <div className="w-12 h-12 rounded-full border-[3px] border-white flex items-center justify-center">
-            <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <path d="M12 2a10 10 0 0 1 10 10" />
-              <path d="M12 2a10 10 0 0 0-6.93 17.07" />
-            </svg>
+      {/* ===== LEFT — Branding panel ===== */}
+      <div className="relative hidden lg:flex lg:w-[480px] xl:w-[520px] flex-col justify-between overflow-hidden"
+        style={{ background: 'linear-gradient(135deg, #1e1b4b, #312e81, #3730a3)' }}>
+
+        {/* Decorative orbs */}
+        <div className="absolute -top-24 -left-24 w-96 h-96 rounded-full bg-indigo-500/10 blur-3xl" />
+        <div className="absolute -bottom-32 -right-32 w-[420px] h-[420px] rounded-full bg-purple-500/10 blur-3xl" />
+        <div className="absolute top-1/3 right-0 w-64 h-64 rounded-full border border-white/5" />
+        <div className="absolute bottom-1/4 left-8 w-40 h-40 rounded-full border border-white/5" />
+
+        {/* Top content */}
+        <div className="relative z-10 px-10 pt-12">
+          <div className="flex items-center gap-2.5 mb-16">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span className="text-lg font-bold text-white tracking-tight">LeadCRM</span>
           </div>
-        </div>
 
-        {/* Promotional copy */}
-        <div className="relative z-10 max-w-md">
-          <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight">
-            Lead Management<br />System
+          <h2 className="text-3xl xl:text-4xl font-bold text-white leading-tight">
+            Manage your leads.<br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-300 to-purple-300">
+              Close more deals.
+            </span>
           </h2>
-          <p className="mt-4 text-blue-100/80 text-base leading-relaxed">
-            View all the analytics and grow your business from anywhere!
+          <p className="mt-4 text-indigo-200/60 text-sm leading-relaxed max-w-xs">
+            Track every lead from first contact to conversion with analytics-powered insights.
           </p>
-
         </div>
 
-        {/* Floating dashboard preview card */}
-        <div className="relative z-10 mt-12 max-w-lg">
-          <div className="rounded-2xl overflow-hidden shadow-2xl shadow-black/30 border border-white/10"
-            style={{ background: '#0f1117' }}>
-            {/* Title bar dots */}
-            <div className="flex items-center gap-1.5 px-4 pt-3 pb-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-red-500" />
-              <span className="w-2.5 h-2.5 rounded-full bg-yellow-500" />
-              <span className="w-2.5 h-2.5 rounded-full bg-green-500" />
-              <span className="ml-4 text-[10px] text-gray-500 font-mono">app.leadcrm.io</span>
-            </div>
-
-            <div className="flex">
-              {/* Mini sidebar */}
-              <div className="w-28 border-r border-white/5 px-2 py-3 space-y-1 text-[10px]">
-                {['Leads', 'Pipeline', 'Contacts', 'Analytics', 'Sales Reps', 'Reports'].map((item, i) => (
-                  <div key={item} className={`px-2 py-1.5 rounded-md flex items-center gap-1.5 ${i === 0 ? 'bg-blue-600 text-white' : 'text-gray-500'}`}>
-                    <span className="w-3 h-3 rounded bg-current opacity-40 inline-block" />
-                    {item}
-                  </div>
-                ))}
+        {/* Stats preview */}
+        <div className="relative z-10 px-10 pb-12">
+          <div className="grid grid-cols-3 gap-3">
+            {[
+              { label: 'Leads Tracked', value: '2,400+', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' },
+              { label: 'Conversion Rate', value: '34%', icon: 'M13 7h8m0 0v8m0-8l-8 8-4-4-6 6' },
+              { label: 'Active Reps', value: '18', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z' },
+            ].map((s) => (
+              <div key={s.label} className="rounded-xl p-3 bg-white/5 border border-white/5">
+                <svg className="w-4 h-4 text-indigo-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d={s.icon} />
+                </svg>
+                <p className="text-white font-bold text-lg leading-tight">{s.value}</p>
+                <p className="text-indigo-300/50 text-[10px] mt-0.5">{s.label}</p>
               </div>
+            ))}
+          </div>
 
-              {/* Mini main content */}
-              <div className="flex-1 px-4 py-3">
-                <p className="text-white font-bold text-sm">Lead Pipeline</p>
-                <p className="text-gray-500 text-[10px] mt-0.5 mb-3">This Month</p>
-
-                {/* Metric cards */}
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {[
-                    { label: 'New Leads', val: '104', spark: 'M0 24 L10 20 L20 22 L30 14 L40 16 L50 8 L60 12 L70 6 L80 8', color: '#60a5fa' },
-                    { label: 'Converted', val: '24', spark: 'M0 20 L15 18 L30 24 L45 10 L60 16 L80 6', color: '#34d399' },
-                    { label: 'Interactions', val: '281', spark: 'M0 16 L20 20 L40 12 L60 22 L80 10', color: '#fbbf24' },
-                  ].map((m, i) => (
-                    <div key={i} className="rounded-lg p-2" style={{ background: '#1a1d27' }}>
-                      <p className="text-gray-500 text-[8px] mb-0.5">{m.label}</p>
-                      <p className="text-white text-sm font-bold">{m.val}</p>
-                      <Sparkline d={m.spark} color={m.color} />
-                    </div>
-                  ))}
+          <div className="mt-6 flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {['bg-indigo-400', 'bg-purple-400', 'bg-pink-400', 'bg-amber-400'].map((c, i) => (
+                <div key={i} className={`w-7 h-7 rounded-full ${c} border-2 border-indigo-900 flex items-center justify-center text-[9px] font-bold text-white`}>
+                  {['A', 'M', 'S', 'R'][i]}
                 </div>
-
-                {/* Mini conversion trend chart */}
-                <div className="rounded-lg p-3" style={{ background: '#1a1d27' }}>
-                  <p className="text-gray-500 text-[8px] mb-1">Conversion Trend</p>
-                  <svg viewBox="0 0 260 60" className="w-full h-12" fill="none">
-                    <path d="M0 50 L30 42 L60 48 L90 30 L120 36 L150 20 L180 28 L210 12 L240 18 L260 8"
-                      stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" />
-                    <path d="M0 45 L40 40 L80 38 L120 32 L160 28 L200 22 L240 20 L260 16"
-                      stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="4 3" />
-                    <path d="M0 50 L30 42 L60 48 L90 30 L120 36 L150 20 L180 28 L210 12 L240 18 L260 8 L260 60 L0 60Z"
-                      fill="url(#chartGrad)" opacity="0.15" />
-                    <defs>
-                      <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#3b82f6" />
-                        <stop offset="100%" stopColor="transparent" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                </div>
-              </div>
+              ))}
             </div>
+            <p className="text-indigo-300/40 text-xs">Team members active today</p>
           </div>
         </div>
       </div>
 
-      {/* =========  RIGHT PANEL – Dark login form  ========= */}
-      <div
-        className="flex-1 flex items-center justify-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12"
-        style={{ background: '#0a0a0a' }}
-      >
-        <div className="w-full max-w-md animate-fade-in">
-          <h1 className="text-3xl sm:text-4xl font-bold text-white mb-10">Log in</h1>
+      {/* ===== RIGHT — Login form ===== */}
+      <div className="flex-1 flex items-center justify-center px-6 sm:px-12 lg:px-16 xl:px-24 py-12">
+        <div className="w-full max-w-[420px] animate-fade-in">
 
-          <ErrorAlert message={error} />
+          {/* Mobile logo */}
+          <div className="flex items-center gap-2.5 mb-10 lg:hidden">
+            <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <span className="text-lg font-bold text-gray-900 tracking-tight">LeadCRM</span>
+          </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Welcome back</h1>
+          <p className="mt-2 text-sm text-gray-500 mb-8">Sign in to your account to continue</p>
+
+          {/* Error */}
+          {error && (
+            <div className="mb-6 flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-200 px-4 py-3">
+              <svg className="h-4 w-4 text-red-500 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              </svg>
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-400 mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Email address
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
@@ -157,7 +131,7 @@ export default function LoginPage() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="block w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-4 py-3 text-white placeholder-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white/8 text-sm outline-none"
+                  className="block w-full rounded-xl border border-gray-200 bg-white pl-10 pr-4 py-3 text-gray-900 placeholder-gray-400 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
                   placeholder="name@example.com"
                 />
               </div>
@@ -165,12 +139,12 @@ export default function LoginPage() {
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-400 mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
                 Password
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                  <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 </div>
@@ -180,13 +154,13 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-xl border border-white/10 bg-white/5 pl-11 pr-11 py-3 text-white placeholder-gray-600 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 focus:bg-white/8 text-sm outline-none"
+                  className="block w-full rounded-xl border border-gray-200 bg-white pl-10 pr-11 py-3 text-gray-900 placeholder-gray-400 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-sm"
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-500 hover:text-gray-300"
+                  className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? (
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -202,31 +176,20 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Remember password */}
-            <div className="flex items-center">
-              <input
-                id="remember"
-                type="checkbox"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-                className="h-4 w-4 rounded border-gray-600 bg-transparent text-blue-600 focus:ring-blue-500 focus:ring-offset-0"
-              />
-              <label htmlFor="remember" className="ml-2 text-sm text-gray-500">
-                Remember password
-              </label>
-            </div>
-
-            {/* Sign in button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
-              className="w-full flex justify-center py-3.5 px-4 rounded-xl text-sm font-semibold text-white bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] shadow-lg shadow-blue-600/25"
+              className="w-full flex justify-center py-3 px-4 rounded-xl text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ background: 'linear-gradient(135deg, #4f46e5, #6366f1, #7c3aed)' }}
             >
               {loading ? <Spinner size="sm" /> : 'Sign in'}
             </button>
           </form>
 
-
+          <p className="mt-10 text-center text-xs text-gray-400">
+            Lead Management System &middot; TeamBlue
+          </p>
         </div>
       </div>
     </div>
