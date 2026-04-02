@@ -1,12 +1,11 @@
 using LeadManagementSystem.Features.Common;
 using LeadManagementSystem.Logic;
-using MediatR;
 
 namespace LeadManagementSystem.Features.Leads;
 
-public sealed record ConvertLeadToCustomerCommand(int LeadId) : IRequest<OperationResult>;
+public sealed record ConvertLeadToCustomerCommand(int LeadId);
 
-public sealed class ConvertLeadToCustomerHandler : IRequestHandler<ConvertLeadToCustomerCommand, OperationResult>
+public sealed class ConvertLeadToCustomerHandler
 {
     private readonly LeadService _leadService;
     private readonly ILogger<ConvertLeadToCustomerHandler> _logger;
@@ -17,7 +16,7 @@ public sealed class ConvertLeadToCustomerHandler : IRequestHandler<ConvertLeadTo
         _logger = logger;
     }
 
-    public async Task<OperationResult> Handle(ConvertLeadToCustomerCommand request, CancellationToken cancellationToken)
+    public async Task<OperationResult> HandleAsync(ConvertLeadToCustomerCommand request)
     {
         var result = await Task.FromResult(_leadService.ConvertToCustomer(request.LeadId));
         if (result.Success)

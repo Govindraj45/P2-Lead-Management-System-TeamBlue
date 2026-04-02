@@ -21,7 +21,7 @@ public class UpdateLeadStatusHandlerTests
         var service = new LeadService(_leadRepo.Object);
         var handler = new UpdateLeadStatusHandler(service, _logger.Object);
 
-        var result = await handler.Handle(new UpdateLeadStatusCommand(1, "Contacted"), CancellationToken.None);
+        var result = await handler.HandleAsync(new UpdateLeadStatusCommand(1, "Contacted"));
 
         Assert.True(result.Success);
     }
@@ -34,7 +34,7 @@ public class UpdateLeadStatusHandlerTests
         var service = new LeadService(_leadRepo.Object);
         var handler = new UpdateLeadStatusHandler(service, _logger.Object);
 
-        var result = await handler.Handle(new UpdateLeadStatusCommand(1, "Converted"), CancellationToken.None);
+        var result = await handler.HandleAsync(new UpdateLeadStatusCommand(1, "Converted"));
 
         Assert.False(result.Success);
         Assert.Contains("Cannot transition", result.Message);
@@ -48,7 +48,7 @@ public class UpdateLeadStatusHandlerTests
         var service = new LeadService(_leadRepo.Object);
         var handler = new UpdateLeadStatusHandler(service, _logger.Object);
 
-        var result = await handler.Handle(new UpdateLeadStatusCommand(1, "New"), CancellationToken.None);
+        var result = await handler.HandleAsync(new UpdateLeadStatusCommand(1, "New"));
 
         Assert.False(result.Success);
     }

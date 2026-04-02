@@ -1,7 +1,6 @@
 using LeadManagementSystem.Features.Common;
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Models;
-using MediatR;
 using System.Text.RegularExpressions;
 
 namespace LeadManagementSystem.Features.Leads;
@@ -16,9 +15,9 @@ public sealed record UpdateLeadCommand(
     string Status,
     string Source,
     string Priority,
-    int? AssignedToRepId) : IRequest<OperationResult>;
+    int? AssignedToRepId);
 
-public sealed class UpdateLeadHandler : IRequestHandler<UpdateLeadCommand, OperationResult>
+public sealed class UpdateLeadHandler
 {
     private readonly ILeadRepository _repository;
     private readonly ISalesRepository _salesRepository;
@@ -26,11 +25,11 @@ public sealed class UpdateLeadHandler : IRequestHandler<UpdateLeadCommand, Opera
 
     private static readonly Dictionary<string, HashSet<string>> AllowedTransitions = new()
     {
-        ["New"] = new() { "New", "Contacted" },
-        ["Contacted"] = new() { "Contacted", "Qualified", "Unqualified" },
-        ["Qualified"] = new() { "Qualified", "Converted", "Unqualified" },
-        ["Unqualified"] = new() { "Unqualified" },
-        ["Converted"] = new() { "Converted" },
+        ["New"] = new() { "Contacted" },
+        ["Contacted"] = new() { "Qualified", "Unqualified" },
+        ["Qualified"] = new() { "Converted", "Unqualified" },
+        ["Unqualified"] = new(),
+        ["Converted"] = new(),
     };
 
     public UpdateLeadHandler(ILeadRepository repository, ISalesRepository salesRepository, ILogger<UpdateLeadHandler> logger)
@@ -40,7 +39,7 @@ public sealed class UpdateLeadHandler : IRequestHandler<UpdateLeadCommand, Opera
         _logger = logger;
     }
 
-    public Task<OperationResult> Handle(UpdateLeadCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult> HandleAsync(UpdateLeadCommand request)
     {
         var existing = _repository.GetLeadById(request.LeadId);
         if (existing is null)

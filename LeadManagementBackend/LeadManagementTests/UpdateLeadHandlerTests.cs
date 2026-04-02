@@ -35,7 +35,7 @@ public class UpdateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new UpdateLeadCommand(1, "Updated Name", "existing@test.com", null, null, null, "New", "Website", "High", null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.True(result.Success);
         _leadRepo.Verify(r => r.UpdateLead(It.IsAny<Lead>()), Times.Once);
@@ -48,7 +48,7 @@ public class UpdateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new UpdateLeadCommand(99, "Name", null, null, null, null, "New", "Website", "Medium", null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("not found", result.Message);
@@ -61,7 +61,7 @@ public class UpdateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new UpdateLeadCommand(1, "Name", null, null, null, null, "Converted", "Website", "Medium", null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("cannot be modified", result.Message, StringComparison.OrdinalIgnoreCase);
@@ -77,7 +77,7 @@ public class UpdateLeadHandlerTests
         // New → Qualified is not allowed; must go New → Contacted first
         var cmd = new UpdateLeadCommand(1, "Name", null, null, null, null, "Qualified", "Website", "Medium", null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("Cannot transition", result.Message);
@@ -93,7 +93,7 @@ public class UpdateLeadHandlerTests
         // New → Contacted is a valid transition
         var cmd = new UpdateLeadCommand(1, "Name", null, null, null, null, "Contacted", "Website", "Medium", null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.True(result.Success);
     }
@@ -108,7 +108,7 @@ public class UpdateLeadHandlerTests
         var handler = CreateHandler();
         var cmd = new UpdateLeadCommand(1, "Name", "taken@test.com", null, null, null, "New", "Website", "Medium", null);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("email already exists", result.Message);

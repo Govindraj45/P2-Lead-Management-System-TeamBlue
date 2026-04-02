@@ -1,12 +1,11 @@
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Models;
-using MediatR;
 
 namespace LeadManagementSystem.Features.SalesReps;
 
-public sealed record GetSalesRepByIdQuery(int RepId) : IRequest<SalesRep?>;
+public sealed record GetSalesRepByIdQuery(int RepId);
 
-public sealed class GetSalesRepByIdHandler : IRequestHandler<GetSalesRepByIdQuery, SalesRep?>
+public sealed class GetSalesRepByIdHandler
 {
     private readonly ISalesRepository _repository;
 
@@ -15,7 +14,7 @@ public sealed class GetSalesRepByIdHandler : IRequestHandler<GetSalesRepByIdQuer
         _repository = repository;
     }
 
-    public Task<SalesRep?> Handle(GetSalesRepByIdQuery request, CancellationToken cancellationToken)
+    public Task<SalesRep?> HandleAsync(GetSalesRepByIdQuery request)
     {
         return Task.FromResult(_repository.GetRepById(request.RepId));
     }

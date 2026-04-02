@@ -3,7 +3,6 @@ using LeadManagementSystem.Consul;
 using LeadManagementSystem.Data;
 using LeadManagementSystem.Features.SalesReps;
 using LeadManagementSystem.Interfaces;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +20,12 @@ builder.Services.AddSingleton<IConsulClient>(_ =>
 });
 builder.Services.AddHostedService<ConsulRegistrationHostedService>();
 
-builder.Services.AddMediatR(typeof(CreateSalesRepCommand).Assembly);
+// CQRS Handlers (simple service-based, no MediatR)
+builder.Services.AddScoped<CreateSalesRepHandler>();
+builder.Services.AddScoped<GetAllSalesRepsHandler>();
+builder.Services.AddScoped<GetSalesRepByIdHandler>();
+builder.Services.AddScoped<UpdateSalesRepHandler>();
+builder.Services.AddScoped<DeleteSalesRepHandler>();
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<ISalesRepository, EfSalesRepository>();

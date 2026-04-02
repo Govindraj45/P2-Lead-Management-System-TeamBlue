@@ -20,7 +20,7 @@ public class DeleteLeadHandlerTests
         _leadRepo.Setup(r => r.GetLeadById(1)).Returns(new Lead { LeadId = 1, Name = "Test", Status = "New" });
         var handler = CreateHandler();
 
-        var result = await handler.Handle(new DeleteLeadCommand(1), CancellationToken.None);
+        var result = await handler.HandleAsync(new DeleteLeadCommand(1));
 
         Assert.True(result.Success);
         _leadRepo.Verify(r => r.DeleteLead(1), Times.Once);
@@ -32,7 +32,7 @@ public class DeleteLeadHandlerTests
         _leadRepo.Setup(r => r.GetLeadById(99)).Returns((Lead?)null);
         var handler = CreateHandler();
 
-        var result = await handler.Handle(new DeleteLeadCommand(99), CancellationToken.None);
+        var result = await handler.HandleAsync(new DeleteLeadCommand(99));
 
         Assert.False(result.Success);
         Assert.Contains("not found", result.Message);
@@ -44,7 +44,7 @@ public class DeleteLeadHandlerTests
         _leadRepo.Setup(r => r.GetLeadById(1)).Returns(new Lead { LeadId = 1, Name = "Test", Status = "Converted" });
         var handler = CreateHandler();
 
-        var result = await handler.Handle(new DeleteLeadCommand(1), CancellationToken.None);
+        var result = await handler.HandleAsync(new DeleteLeadCommand(1));
 
         Assert.False(result.Success);
         Assert.Contains("Cannot delete a converted lead", result.Message);

@@ -1,7 +1,6 @@
 using LeadManagementSystem.Features.Common;
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Models;
-using MediatR;
 
 namespace LeadManagementSystem.Features.SalesReps;
 
@@ -9,9 +8,9 @@ public sealed record UpdateSalesRepCommand(
     int RepId,
     string Name,
     string Email,
-    string Department) : IRequest<OperationResult>;
+    string Department);
 
-public sealed class UpdateSalesRepHandler : IRequestHandler<UpdateSalesRepCommand, OperationResult>
+public sealed class UpdateSalesRepHandler
 {
     private readonly ISalesRepository _repository;
 
@@ -20,7 +19,7 @@ public sealed class UpdateSalesRepHandler : IRequestHandler<UpdateSalesRepComman
         _repository = repository;
     }
 
-    public Task<OperationResult> Handle(UpdateSalesRepCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult> HandleAsync(UpdateSalesRepCommand request)
     {
         var existing = _repository.GetRepById(request.RepId);
         if (existing is null)

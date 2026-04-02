@@ -1,7 +1,6 @@
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Models;
 using LeadManagementSystem.Features.Common;
-using MediatR;
 
 namespace LeadManagementSystem.Features.Leads;
 
@@ -13,9 +12,9 @@ public sealed record CreateLeadCommand(
     string? Status,
     string? Source,
     string? Priority,
-    int? AssignedToRepId) : IRequest<OperationResult<int>>;
+    int? AssignedToRepId);
 
-public sealed class CreateLeadHandler : IRequestHandler<CreateLeadCommand, OperationResult<int>>
+public sealed class CreateLeadHandler
 {
     private readonly ILeadRepository _repository;
 
@@ -24,7 +23,7 @@ public sealed class CreateLeadHandler : IRequestHandler<CreateLeadCommand, Opera
         _repository = repository;
     }
 
-    public Task<OperationResult<int>> Handle(CreateLeadCommand request, CancellationToken cancellationToken)
+    public Task<OperationResult<int>> HandleAsync(CreateLeadCommand request)
     {
         var lead = new Lead
         {

@@ -21,7 +21,7 @@ public class CreateInteractionHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateInteractionCommand("Call", "Discussed pricing", DateTime.UtcNow.AddHours(-1), DateTime.UtcNow.AddDays(7), 1);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.True(result.Success);
         _interactionRepo.Verify(r => r.AddInteraction(It.IsAny<Interaction>()), Times.Once);
@@ -34,7 +34,7 @@ public class CreateInteractionHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateInteractionCommand("Call", "Notes", DateTime.UtcNow.AddHours(-1), null, 1);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("Cannot add interactions to a converted lead", result.Message);
@@ -47,7 +47,7 @@ public class CreateInteractionHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateInteractionCommand("Call", "Notes", DateTime.UtcNow.AddDays(5), null, 1);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("cannot be in the future", result.Message, StringComparison.OrdinalIgnoreCase);
@@ -61,7 +61,7 @@ public class CreateInteractionHandlerTests
         var interactionDate = DateTime.UtcNow.AddHours(-2);
         var cmd = new CreateInteractionCommand("Call", "Notes", interactionDate, interactionDate.AddHours(-1), 1);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("FollowUpDate must be greater than InteractionDate", result.Message);
@@ -74,7 +74,7 @@ public class CreateInteractionHandlerTests
         var handler = CreateHandler();
         var cmd = new CreateInteractionCommand("Call", "Notes", DateTime.UtcNow.AddHours(-1), null, 99);
 
-        var result = await handler.Handle(cmd, CancellationToken.None);
+        var result = await handler.HandleAsync(cmd);
 
         Assert.False(result.Success);
         Assert.Contains("Lead not found", result.Message);

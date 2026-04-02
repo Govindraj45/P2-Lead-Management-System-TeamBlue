@@ -21,7 +21,7 @@ public class ConvertLeadHandlerTests
         var service = new LeadService(_leadRepo.Object);
         var handler = new ConvertLeadToCustomerHandler(service, _logger.Object);
 
-        var result = await handler.Handle(new ConvertLeadToCustomerCommand(1), CancellationToken.None);
+        var result = await handler.HandleAsync(new ConvertLeadToCustomerCommand(1));
 
         Assert.True(result.Success);
         _leadRepo.Verify(r => r.UpdateLead(It.Is<Lead>(l => l.Status == "Converted")), Times.Once);
@@ -35,7 +35,7 @@ public class ConvertLeadHandlerTests
         var service = new LeadService(_leadRepo.Object);
         var handler = new ConvertLeadToCustomerHandler(service, _logger.Object);
 
-        var result = await handler.Handle(new ConvertLeadToCustomerCommand(1), CancellationToken.None);
+        var result = await handler.HandleAsync(new ConvertLeadToCustomerCommand(1));
 
         Assert.False(result.Success);
     }
@@ -47,7 +47,7 @@ public class ConvertLeadHandlerTests
         var service = new LeadService(_leadRepo.Object);
         var handler = new ConvertLeadToCustomerHandler(service, _logger.Object);
 
-        var result = await handler.Handle(new ConvertLeadToCustomerCommand(99), CancellationToken.None);
+        var result = await handler.HandleAsync(new ConvertLeadToCustomerCommand(99));
 
         Assert.False(result.Success);
     }

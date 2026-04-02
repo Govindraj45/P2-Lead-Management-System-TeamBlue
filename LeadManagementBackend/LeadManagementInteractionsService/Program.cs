@@ -3,7 +3,6 @@ using LeadManagementSystem.Consul;
 using LeadManagementSystem.Data;
 using LeadManagementSystem.Features.Interactions;
 using LeadManagementSystem.Interfaces;
-using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -21,7 +20,9 @@ builder.Services.AddSingleton<IConsulClient>(_ =>
 });
 builder.Services.AddHostedService<ConsulRegistrationHostedService>();
 
-builder.Services.AddMediatR(typeof(CreateInteractionCommand).Assembly);
+// CQRS Handlers (simple service-based, no MediatR)
+builder.Services.AddScoped<CreateInteractionHandler>();
+builder.Services.AddScoped<GetInteractionsByLeadHandler>();
 builder.Services.AddControllers();
 
 builder.Services.AddScoped<IInteractionRepository, EfInteractionRepository>();
