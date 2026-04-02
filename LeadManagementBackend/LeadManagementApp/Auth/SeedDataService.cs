@@ -31,24 +31,21 @@ public class SeedDataService
                 Email = "admin@leadcrm.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin@123"),
                 FullName = "System Admin",
-                Role = "Admin",
-                SalesRepId = null
+                Role = "Admin"
             },
             new()
             {
                 Email = "manager@leadcrm.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Manager@123"),
                 FullName = "Sales Manager",
-                Role = "SalesManager",
-                SalesRepId = null
+                Role = "SalesManager"
             },
             new()
             {
                 Email = "rep@leadcrm.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Rep@123"),
                 FullName = "Sales Rep",
-                Role = "SalesRep",
-                SalesRepId = 1
+                Role = "SalesRep"
             }
         };
 

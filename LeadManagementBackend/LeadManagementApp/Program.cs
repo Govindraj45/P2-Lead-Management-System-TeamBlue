@@ -7,7 +7,6 @@ using LeadManagementSystem.Features.Common;
 using LeadManagementSystem.Features.Interactions;
 using LeadManagementSystem.Features.Leads;
 using LeadManagementSystem.Features.Reports;
-using LeadManagementSystem.Features.SalesReps;
 using LeadManagementSystem.Interfaces;
 using LeadManagementSystem.Logic;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -43,14 +42,8 @@ builder.Services.AddScoped<ConvertLeadToCustomerHandler>();
 builder.Services.AddScoped<CreateInteractionHandler>();
 builder.Services.AddScoped<GetInteractionsByLeadHandler>();
 builder.Services.AddScoped<GetLeadStatusDistributionHandler>();
-builder.Services.AddScoped<CreateSalesRepHandler>();
-builder.Services.AddScoped<GetAllSalesRepsHandler>();
-builder.Services.AddScoped<GetSalesRepByIdHandler>();
-builder.Services.AddScoped<UpdateSalesRepHandler>();
-builder.Services.AddScoped<DeleteSalesRepHandler>();
 
 builder.Services.AddScoped<ILeadRepository, EfLeadRepository>();
-builder.Services.AddScoped<ISalesRepository, EfSalesRepository>();
 builder.Services.AddScoped<IInteractionRepository, EfInteractionRepository>();
 builder.Services.AddScoped<LeadService>();
 builder.Services.AddScoped<ReportService>();
@@ -188,7 +181,7 @@ leads.MapPost("", async (CreateLeadRequest request, CreateLeadHandler handler, I
         request.Status,
         request.Source,
         request.Priority,
-        request.AssignedToRepId));
+        request.AssignedSalesRepId));
 
     if (result.Success) await InvalidateAnalyticsCache(cache);
     return result.Success
@@ -208,7 +201,7 @@ leads.MapPut("/{id:int}", async (int id, UpdateLeadRequest request, UpdateLeadHa
         request.Status,
         request.Source,
         request.Priority,
-        request.AssignedToRepId));
+        request.AssignedSalesRepId));
 
     if (result.Success) await InvalidateAnalyticsCache(cache);
     return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
@@ -255,40 +248,6 @@ leads.MapPost("/{id:int}/interactions", async (int id, CreateInteractionRequest 
     return result.Success
         ? Results.Created($"/api/leads/{id}/interactions/{result.Value}", new { id = result.Value, message = result.Message })
         : Results.BadRequest(new { message = result.Message });
-});
-
-var reps = app.MapGroup("/api/reps").RequireAuthorization("AllRoles");
-
-reps.MapGet("", async (GetAllSalesRepsHandler handler) =>
-{
-    var reps = await handler.HandleAsync(new GetAllSalesRepsQuery());
-    return Results.Ok(reps);
-});
-
-reps.MapGet("/{id:int}", async (int id, GetSalesRepByIdHandler handler) =>
-{
-    var rep = await handler.HandleAsync(new GetSalesRepByIdQuery(id));
-    return rep is null ? Results.NotFound(new { message = "Sales representative not found." }) : Results.Ok(rep);
-});
-
-reps.MapPost("", async (CreateSalesRepRequest request, CreateSalesRepHandler handler) =>
-{
-    var result = await handler.HandleAsync(new CreateSalesRepCommand(request.Name, request.Email, request.Department));
-    return result.Success
-        ? Results.Created($"/api/reps/{result.Value}", new { id = result.Value, message = result.Message })
-        : Results.BadRequest(new { message = result.Message });
-});
-
-reps.MapPut("/{id:int}", async (int id, UpdateSalesRepRequest request, UpdateSalesRepHandler handler) =>
-{
-    var result = await handler.HandleAsync(new UpdateSalesRepCommand(id, request.Name, request.Email, request.Department));
-    return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
-});
-
-reps.MapDelete("/{id:int}", async (int id, DeleteSalesRepHandler handler) =>
-{
-    var result = await handler.HandleAsync(new DeleteSalesRepCommand(id));
-    return ToHttpResult(result, missingResourceStatusCode: StatusCodes.Status404NotFound);
 });
 
 // Legacy interaction routes (backward-compat)
@@ -406,7 +365,7 @@ public sealed record CreateLeadRequest(
     string? Status,
     string? Source,
     string? Priority,
-    int? AssignedToRepId);
+    int? AssignedSalesRepId);
 
 public sealed record LoginRequest(string Email, string Password);
 
@@ -419,13 +378,9 @@ public sealed record UpdateLeadRequest(
     string Status,
     string Source,
     string Priority,
-    int? AssignedToRepId);
+    int? AssignedSalesRepId);
 
 public sealed record LeadStatusUpdateRequest(string NewStatus);
-
-public sealed record CreateSalesRepRequest(string Name, string Email, string? Department);
-
-public sealed record UpdateSalesRepRequest(string Name, string Email, string Department);
 
 public sealed record CreateInteractionRequest(
     string InteractionType,

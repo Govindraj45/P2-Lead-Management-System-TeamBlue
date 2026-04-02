@@ -32,9 +32,9 @@ public class TokenService
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
         };
 
-        if (user.SalesRepId.HasValue)
+        if (user.Role == "SalesRep")
         {
-            claims.Add(new Claim("SalesRepId", user.SalesRepId.Value.ToString()));
+            claims.Add(new Claim("SalesRepId", user.UserId.ToString()));
         }
 
         var token = new JwtSecurityToken(

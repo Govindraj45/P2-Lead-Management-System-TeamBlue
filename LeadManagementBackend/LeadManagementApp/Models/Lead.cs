@@ -20,9 +20,9 @@ public class Lead
     public DateTime? ModifiedDate { get; set; }
     public DateTime? ConvertedDate { get; set; }
 
-    // Foreign Key for SalesRep
-    public int? AssignedToRepId { get; set; }
-    public virtual SalesRep? AssignedRep { get; set; }
+    // Foreign Key to Users (SalesRep role user)
+    public int? AssignedSalesRepId { get; set; }
+    public virtual User? AssignedSalesRep { get; set; }
 
     // Relationship: One Lead can have many Interactions
     public virtual ICollection<Interaction> Interactions { get; set; } = new List<Interaction>();

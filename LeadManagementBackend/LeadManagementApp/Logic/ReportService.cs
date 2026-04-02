@@ -42,8 +42,8 @@ public class ReportService
     public List<SalesRepStat> GetLeadsBySalesRep()
     {
         var leads = _repo.GetAllLeads();
-        return leads.Where(l => l.AssignedToRepId.HasValue)
-            .GroupBy(l => l.AssignedToRepId!.Value)
+        return leads.Where(l => l.AssignedSalesRepId.HasValue)
+            .GroupBy(l => l.AssignedSalesRepId!.Value)
             .Select(g => new SalesRepStat(
                 g.Key,
                 g.Count(),
